@@ -5,8 +5,7 @@ function rootPath() {
   return __dirname;
 } 
 
-var AndroidDevice = function (adb, id, type) {
-  this.adb = adb;
+var AndroidDevice = function (id, type) {
   this.id = id;
   this.type = type;
 };
@@ -95,6 +94,16 @@ window.addEventListener('DOMContentLoaded', () => {
   callAdb(adbPath, {
         cmd: ['devices']
     }, function(result) {
-      console.log(parseDevices(result))
+      var devices = parseDevices(result)
+      console.log(devices)
+
+      var deviceCombobox = document.getElementById("deviceCombobox");
+
+      var i;
+      for (i = 0; i < devices.length; i++) {
+        var option = document.createElement("option");
+        option.text = devices[i].id;
+        deviceCombobox.add(option); 
+      }
     });
 })
