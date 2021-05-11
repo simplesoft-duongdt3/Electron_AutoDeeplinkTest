@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deeplink Autimation test</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+</head>
+
+<body>
+  <section class="section">
+    <div class="container ">
+      <h1 class="title">
+        Deeplink Autimation test
+      </h1>
+
+      <div class="field is-grouped is-flex is-align-items-center">
+        <div class="control">
+          <label class="checkbox">
+            <input type="checkbox">
+            Take screenshot</a>
+          </label>
+        </div>
+
+        <div class="control">
+          <label class="checkbox">
+            <input type="checkbox">
+            Record screen</a>
+          </label>
+        </div>
+
+        <label>Device</label>
+        <p class="control">
+
+          <span class="select">
+            <select id="deviceCombobox">
+              <option>emulator-5554</option>
+            </select>
+          </span>
+        </p>
+
+        <label>Config</label>
+        <p class="control">
+          <span class="select">
+            <select id="configCombobox">
+              <option>$xxx asd asd asd</option>
+              <option>£xxxx asd asd</option>
+              <option>€xxxx asdasd</option>
+            </select>
+          </span>
+        </p>
+        <p class="control">
+          <a class="button is-primary">
+            Run
+          </a>
+        </p>
+      </div>
+
+      <table class="table is-fullwidth is-hoverable is-striped">
+        <thead>
+          <tr>
+            <th><abbr title="#">#</abbr></th>
+            <th><abbr title="ID">ID</abbr></th>
+            <th><abbr title="Deeplink">Deeplink</abbr></th>
+            <th><abbr title="Status">Status</abbr></th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th><abbr title="#">#</abbr></th>
+            <th><abbr title="ID">ID</abbr></th>
+            <th><abbr title="Deeplink">Deeplink</abbr></th>
+            <th><abbr title="Status">Status</abbr></th>
+          </tr>
+        </tfoot>
+        <tbody>
+          <tr>
+            <th>7</th>
+            <td><a href="https://en.wikipedia.org/wiki/West_Ham_United_F.C." title="West Ham United F.C.">West Ham
+                United</a></td>
+            <td>16</td>
+            <td>TODO</td>
+          </tr>
+          <tr>
+            <th>8</th>
+            <td><a href="https://en.wikipedia.org/wiki/Liverpool_F.C." title="Liverpool F.C.">Liverpool</a></td>
+            <td>16</td>
+            <td>Done</td>
+          </tr>
+          <tr>
+            <th>9</th>
+            <td><a href="https://en.wikipedia.org/wiki/Stoke_City_F.C." title="Stoke City F.C.">Stoke City</a></td>
+            <td>14</td>
+            <td>TODO</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</body>
+
+</html>
