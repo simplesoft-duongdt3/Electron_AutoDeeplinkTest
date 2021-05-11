@@ -71,39 +71,58 @@ window.addEventListener('DOMContentLoaded', () => {
     replaceText(`${type}-version`, process.versions[type])
   }
 
-  const path = require('path');
   const rootPathApp = rootPath();
+  initConfigCombobox(rootPathApp);
+  initDeviceCombobox(rootPathApp);
+})
+
+function initDeviceCombobox(rootPathApp) {
+  var deviceCombobox = document.getElementById("deviceCombobox");
+
+  const adbPath = rootPathApp + "\\adb\\";
+  callAdb(adbPath, {
+    cmd: ['devices']
+  }, function (result) {
+    var devices = parseDevices(result);
+    console.log(devices);
+
+    var i;
+    for (i = 0; i < devices.length; i++) {
+      var option = document.createElement("option");
+      option.text = devices[i].id;
+      deviceCombobox.add(option);
+    }
+  });
+}
+
+function initConfigCombobox(rootPathApp) {
+  var configCombobox = document.getElementById("configCombobox");
+
+  function onConfigComboboxChange() {
+    console.log("configCombobox onchange " + configCombobox.value);
+  }
+
+  configCombobox.onchange = function() {
+    onConfigComboboxChange();
+  };
+
+  const path = require('path');
   const configPathApp = path.resolve(`${rootPathApp}/configs`);
-  
-  const fs = require('fs')
+
+  const fs = require('fs');
   const files = fs.readdirSync(configPathApp, {
     withFileTypes: true,
   }).filter(fileEnt => fileEnt.isFile())
-  .map(fileEnt => fileEnt.name);
-
-  var configCombobox = document.getElementById("configCombobox");
+    .map(fileEnt => fileEnt.name);
 
   var i;
   for (i = 0; i < files.length; i++) {
     var option = document.createElement("option");
     option.text = files[i];
-    configCombobox.add(option); 
+    configCombobox.add(option);
   }
 
-  const adbPath = rootPathApp + "\\adb\\"
-  callAdb(adbPath, {
-        cmd: ['devices']
-    }, function(result) {
-      var devices = parseDevices(result)
-      console.log(devices)
-
-      var deviceCombobox = document.getElementById("deviceCombobox");
-
-      var i;
-      for (i = 0; i < devices.length; i++) {
-        var option = document.createElement("option");
-        option.text = devices[i].id;
-        deviceCombobox.add(option); 
-      }
-    });
-})
+  if(files.length > 0) {
+    onConfigComboboxChange();
+  }
+}

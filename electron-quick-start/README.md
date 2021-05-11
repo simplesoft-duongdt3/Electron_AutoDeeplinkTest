@@ -1,5 +1,4 @@
 npm start
-npm install node-adb -save
 
 # electron-quick-start
 
