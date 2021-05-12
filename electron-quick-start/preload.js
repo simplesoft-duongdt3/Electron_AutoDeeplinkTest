@@ -69,7 +69,70 @@ function callAdb(adbPath, options, next) {
   return ls;
 };
 
+var mockServerNode = require('mockserver-node');
+var mockServerClient = require('mockserver-client');
+
+
+function addMockServerRules() {
+  mockServerClient.mockServerClient("localhost", 9999)
+  .mockAnyResponse(
+    {
+        'httpRequest': {
+            'method': 'POST',
+            'path': '/somePath',
+            'queryStringParameters': [
+                {
+                    'name': 'test',
+                    'values': [ 'true' ]
+                }
+            ],
+            'body': {
+                'type': "STRING",
+                'value': 'someBody'
+            }
+        },
+        'httpResponse': {
+            'statusCode': 200,
+            'body': JSON.stringify({ name: 'value' }),
+            'delay': {
+                'timeUnit': 'MILLISECONDS',
+                'value': 250
+            }
+        },
+        'times': {
+            'remainingTimes': 1,
+            'unlimited': false
+        }
+    }
+    )
+    .then(
+        function(result) {
+            console.log("mockAnyResponse " + result)
+        }, 
+        function(error) {
+          console.log("mockAnyResponse " + error)
+        }
+    );
+}
+
+function handleRun() {
+  
+  mockServerNode.start_mockserver({
+    serverPort: 9999,
+    trace: true
+  }).then(
+    function(result) {
+        addMockServerRules();
+    }, 
+    function(error) {
+      console.log("start_mockserver ERROR " + error)
+    }
+  );
+
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+
   const replaceText = (selector, text) => {
     const element = document.getElementById(selector)
     if (element) element.innerText = text
@@ -87,7 +150,7 @@ window.addEventListener('DOMContentLoaded', () => {
   
   const btRunDeeplinkTest = document.getElementById("btRunDeeplinkTest");
   btRunDeeplinkTest.onclick = function() {
-        console.log(configDeeplinkTest);
+        handleRun();
   };
 })
 

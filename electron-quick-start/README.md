@@ -1,5 +1,10 @@
 npm start
 
+
+npm install mockserver-node
+npm install mockserver-client --save-dev
+
+
 # electron-quick-start
 
 **Clone and run for a quick way to see Electron in action.**

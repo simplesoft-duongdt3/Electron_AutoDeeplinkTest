@@ -17,7 +17,9 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "electron": "^12.0.7"
+    "electron": "^12.0.7",
+    "mockserver-client": "^5.11.2",
+    "mockserver-node": "^5.11.2"
   },
   "dependencies": {
     "bulma": "^0.9.2",
