@@ -73,7 +73,7 @@ var mockServerNode = require('mockserver-node');
 var mockServerClient = require('mockserver-client');
 
 
-function addMockServerRules() {
+function demoMockRequest() {
   mockServerClient.mockServerClient("localhost", 9999)
   .mockAnyResponse(
     {
@@ -115,6 +115,61 @@ function addMockServerRules() {
     );
 }
 
+function addMockServerRules() {
+  mockServerClient.mockServerClient("localhost", 9999)
+  .mockAnyResponse(
+    {
+        'httpRequest': {
+            'method': 'POST',
+            'path': '/somePath',
+            'body': {
+                'type': "STRING",
+                'value': 'someBody'
+            }
+        },
+        'httpResponse': {
+            'statusCode': 200,
+            'body': JSON.stringify({ name: 'value' }),
+            'delay': {
+                'timeUnit': 'MILLISECONDS',
+                'value': 250
+            }
+        }
+    }
+    )
+    .then(
+        function(result) {
+            console.log("mockAnyResponse " + result)
+        }, 
+        function(error) {
+          console.log("mockAnyResponse " + error)
+        }
+    );
+}
+
+function runTestCase(testCase) {
+ //TODO run test case
+ //1. clear all mock rules + add new mock rules
+ //2. start deeplink by adb 
+ //3. capture screen
+ //4. record video
+ //5. clear mock rules
+}
+
+function runSelectedTestCases() {
+  var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
+  console.log("runSelectedTestCases " + testcases);
+  
+  testcases.forEach(testCase => {
+      var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
+      if(isRun) {
+          runTestCase(testCase);
+      }
+  });
+  //addMockServerRules();
+
+}
+
 function handleRun() {
   
   mockServerNode.start_mockserver({
@@ -122,7 +177,7 @@ function handleRun() {
     trace: true
   }).then(
     function(result) {
-        addMockServerRules();
+        runSelectedTestCases();
     }, 
     function(error) {
       console.log("start_mockserver ERROR " + error)
