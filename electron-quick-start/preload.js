@@ -5,6 +5,8 @@ function rootPath() {
   return __dirname;
 } 
 
+var configDeeplinkTest = null;
+
 var AndroidDevice = function (id, type) {
   this.id = id;
   this.type = type;
@@ -74,6 +76,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const rootPathApp = rootPath();
   initConfigCombobox(rootPathApp);
   initDeviceCombobox(rootPathApp);
+  
+  const btRunDeeplinkTest = document.getElementById("btRunDeeplinkTest");
+  btRunDeeplinkTest.onclick = function() {
+        console.log(configDeeplinkTest);
+  };
 })
 
 function initDeviceCombobox(rootPathApp) {
@@ -125,10 +132,7 @@ function initConfigCombobox(rootPathApp) {
 
 
   function populateConfigItems(config) {
-  
     config.deeplinks.forEach((item, index) => {
-      console.log("populateConfigItems " + item.id);
-      
       var row = document.createElement("tr");
 
       var stt = document.createElement("td");
@@ -158,7 +162,6 @@ function initConfigCombobox(rootPathApp) {
       configItemsTable.appendChild(row);
 
       row.onclick = function() {
-        console.log("row onclick" + item.id);
         let checkBox = document.getElementById(`config_item_${item.id}`);
         checkBox.checked = !checkBox.checked;
       };
@@ -170,13 +173,13 @@ function initConfigCombobox(rootPathApp) {
   }
 
   function onConfigComboboxChange() {
-
+    configDeeplinkTest = null;
     clearConfigItems();
     
     let rawdata = fs.readFileSync(`${configPathApp}/${configCombobox.value}`);
-    //TODO try catch error config read
-    let config = JSON.parse(rawdata);
-    populateConfigItems(config);
+    
+    configDeeplinkTest = JSON.parse(rawdata);
+    populateConfigItems(configDeeplinkTest);
   }
 
   configCombobox.onchange = function() {
