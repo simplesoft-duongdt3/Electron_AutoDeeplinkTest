@@ -34,7 +34,7 @@
         </div>
 
         <label>Device</label>
-        <p class="control">
+        <p class="control m-1">
 
           <span class="select">
             <select id="deviceCombobox">
@@ -43,10 +43,10 @@
         </p>
 
         <label>Config</label>
-        <p class="control">
+        <p class="control m-1">
           <span class="select">
             <select id="configCombobox">
-              
+
             </select>
           </span>
         </p>
@@ -60,21 +60,29 @@
       <table class="table is-fullwidth is-hoverable is-striped">
         <thead>
           <tr>
-            <th><abbr title="#">#</abbr></th>
-            <th><abbr title="ID">ID</abbr></th>
-            <th><abbr title="Deeplink">Deeplink</abbr></th>
-            <th><abbr title="Status">Status</abbr></th>
+            <th>#</th>
+            <th>ID</th>
+            <th>Deeplink</th>
+            <th>Status</th>
+            <th><label class="checkbox pr-6">
+                <input id="cbAllConfigTop" type="checkbox">
+                All
+              </label></th>
           </tr>
         </thead>
         <tfoot>
           <tr>
-            <th><abbr title="#">#</abbr></th>
-            <th><abbr title="ID">ID</abbr></th>
-            <th><abbr title="Deeplink">Deeplink</abbr></th>
-            <th><abbr title="Status">Status</abbr></th>
+            <th>#</th>
+            <th>ID</th>
+            <th>Deeplink</th>
+            <th>Status</th>
+            <th><label class="checkbox pr-6">
+                <input id="cbAllConfigBottom" type="checkbox">
+                All
+              </label></th>
           </tr>
         </tfoot>
-        <tbody>
+        <tbody id="configItemsTable">
           <tr>
             <th>7</th>
             <td><a href="https://en.wikipedia.org/wiki/West_Ham_United_F.C." title="West Ham United F.C.">West Ham
@@ -102,4 +110,5 @@
   <!-- You can also require other files to run in this process -->
   <script src="./renderer.js"></script>
 </body>
+
 </html>

@@ -96,18 +96,92 @@ function initDeviceCombobox(rootPathApp) {
 }
 
 function initConfigCombobox(rootPathApp) {
+  const path = require('path');
+  const configPathApp = path.resolve(`${rootPathApp}/configs`);
+
   var configCombobox = document.getElementById("configCombobox");
+  var configItemsTable = document.getElementById("configItemsTable");
+
+  var cbAllConfigTop = document.getElementById("cbAllConfigTop");
+  var cbAllConfigBottom = document.getElementById("cbAllConfigBottom");
+
+  function updateAllCheckConfigItems(checked) {
+    var items = document.getElementsByClassName("cbConfigItem");
+    var size = items.length;
+    for (i = 0; i < size; i++) {
+      items[i].checked = checked;
+    } 
+  }
+
+  cbAllConfigTop.onchange = function() {
+    cbAllConfigBottom.checked = cbAllConfigTop.checked;
+    updateAllCheckConfigItems(cbAllConfigTop.checked);
+  };
+
+  cbAllConfigBottom.onchange = function() {
+    cbAllConfigTop.checked = cbAllConfigBottom.checked;
+    updateAllCheckConfigItems(cbAllConfigBottom.checked);
+  };
+
+
+  function populateConfigItems(config) {
+  
+    config.deeplinks.forEach((item, index) => {
+      console.log("populateConfigItems " + item.id);
+      
+      var row = document.createElement("tr");
+
+      var stt = document.createElement("td");
+      var sttText = document.createTextNode(index + 1);
+      stt.appendChild(sttText);
+      row.appendChild(stt);
+
+      var id = document.createElement("td");
+      var idText = document.createTextNode(item.id);
+      id.appendChild(idText);
+      row.appendChild(id);
+
+      var deeplink = document.createElement("td");
+      var deeplinkText = document.createTextNode(item.deeplink);
+      deeplink.appendChild(deeplinkText);
+      row.appendChild(deeplink);     
+      
+      var status = document.createElement("td");
+      var statusText = document.createTextNode("TODO");
+      status.appendChild(statusText);
+      row.appendChild(status); 
+
+      var checkBox = document.createElement("td");
+      checkBox.innerHTML = `<input id="config_item_${item.id}" type="checkbox" class="cbConfigItem"></input>`
+      row.appendChild(checkBox); 
+
+      configItemsTable.appendChild(row);
+
+      row.onclick = function() {
+        console.log("row onclick" + item.id);
+        let checkBox = document.getElementById(`config_item_${item.id}`);
+        checkBox.checked = !checkBox.checked;
+      };
+    });
+  }
+
+  function clearConfigItems() {
+    configItemsTable.textContent = '';
+  }
 
   function onConfigComboboxChange() {
-    console.log("configCombobox onchange " + configCombobox.value);
+
+    clearConfigItems();
+    
+    let rawdata = fs.readFileSync(`${configPathApp}/${configCombobox.value}`);
+    //TODO try catch error config read
+    let config = JSON.parse(rawdata);
+    populateConfigItems(config);
   }
 
   configCombobox.onchange = function() {
     onConfigComboboxChange();
   };
-
-  const path = require('path');
-  const configPathApp = path.resolve(`${rootPathApp}/configs`);
 
   const fs = require('fs');
   const files = fs.readdirSync(configPathApp, {
