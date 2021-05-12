@@ -5,7 +5,13 @@ function rootPath() {
   return __dirname;
 } 
 
-var configDeeplinkTest = null;
+var DeepLinkTestConfig = function (rootPathApp, configDeeplinkTest) {
+  this.rootPathApp = rootPathApp;
+  this.configDeeplinkTest = configDeeplinkTest;
+};
+
+
+var deepLinkTestConfig = new DeepLinkTestConfig(null, null)
 
 var AndroidDevice = function (id, type) {
   this.id = id;
@@ -74,6 +80,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   const rootPathApp = rootPath();
+  deepLinkTestConfig.rootPathApp = rootPathApp;
+
   initConfigCombobox(rootPathApp);
   initDeviceCombobox(rootPathApp);
   
@@ -131,8 +139,8 @@ function initConfigCombobox(rootPathApp) {
   };
 
 
-  function populateConfigItems(config) {
-    config.deeplinks.forEach((item, index) => {
+  function populateConfigItems() {
+    deepLinkTestConfig.configDeeplinkTest.deeplinks.forEach((item, index) => {
       var row = document.createElement("tr");
 
       var stt = document.createElement("td");
@@ -173,13 +181,13 @@ function initConfigCombobox(rootPathApp) {
   }
 
   function onConfigComboboxChange() {
-    configDeeplinkTest = null;
+    deepLinkTestConfig.configDeeplinkTest = null;
     clearConfigItems();
     
     let rawdata = fs.readFileSync(`${configPathApp}/${configCombobox.value}`);
     
-    configDeeplinkTest = JSON.parse(rawdata);
-    populateConfigItems(configDeeplinkTest);
+    deepLinkTestConfig.configDeeplinkTest = JSON.parse(rawdata);
+    populateConfigItems();
   }
 
   configCombobox.onchange = function() {
