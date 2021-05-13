@@ -5,19 +5,32 @@ function rootPath() {
   return __dirname;
 } 
 
-var DeepLinkTestConfig = function (rootPathApp, configDeeplinkTest) {
-  this.rootPathApp = rootPathApp;
-  this.configDeeplinkTest = configDeeplinkTest;
-};
+class DeepLinkTestConfig {
+  constructor(rootPathApp, configDeeplinkTest, environmentVars) {
+    this.rootPathApp = rootPathApp;
+    this.configDeeplinkTest = configDeeplinkTest;
+    this.environmentVars = environmentVars;
+  }
 
+  mergeEnvironments(text) {
+    var textNew = text;
+    console.log("mergeEnvironments " + textNew);
+    this.environmentVars.environmentVars.forEach(element => {
+      textNew = textNew.replace(new RegExp(`\\$ENV\\{${element.key}\\}`, "g"), element.value);
+    });
+    
+    return textNew;
+  }
+}
 
-var deepLinkTestConfig = new DeepLinkTestConfig(null, null)
+var deepLinkTestConfig = new DeepLinkTestConfig(null, null, null)
 
 var AndroidDevice = function (id, type) {
   this.id = id;
   this.type = type;
 };
 
+const fs = require('fs');
 
 function parseDevices(data) {
   var lines = data.toString().split('\n');
@@ -115,48 +128,77 @@ function demoMockRequest() {
     );
 }
 
-function addMockServerRules() {
-  mockServerClient.mockServerClient("localhost", 9999)
-  .mockAnyResponse(
-    {
-        'httpRequest': {
-            'method': 'POST',
-            'path': '/somePath',
-            'body': {
-                'type': "STRING",
-                'value': 'someBody'
-            }
-        },
-        'httpResponse': {
-            'statusCode': 200,
-            'body': JSON.stringify({ name: 'value' }),
-            'delay': {
-                'timeUnit': 'MILLISECONDS',
-                'value': 250
-            }
-        }
+async function resetAndAddMockServerRules(mockserverConfigs) {
+  await mockServerClient.mockServerClient("localhost", 9999).reset();
+
+  console.log("mockServerClient reset all state");
+
+  mockserverConfigs.forEach(async (mockserverConfig) => {
+    var requestConfigdata = fs.readFileSync(`${deepLinkTestConfig.rootPathApp}/${mockserverConfig.requestConfig}`, 'utf8');
+    requestConfigdata = deepLinkTestConfig.mergeEnvironments(requestConfigdata);
+
+    var linesRequestConfig = requestConfigdata.match(/^.*([\n\r]+|$)/gm);
+    console.log("linesRequestConfig " + linesRequestConfig);
+    var requestMethod = linesRequestConfig[0];
+    var requestPath = linesRequestConfig[1];
+    var requestBody = '';
+    if(linesRequestConfig.length > 2) {
+      requestBody = linesRequestConfig[2];
     }
-    )
-    .then(
-        function(result) {
-            console.log("mockAnyResponse " + result)
-        }, 
-        function(error) {
-          console.log("mockAnyResponse " + error)
+
+    var responseConfigdata = fs.readFileSync(`${deepLinkTestConfig.rootPathApp}/${mockserverConfig.responseConfig}`, 'utf8');
+    responseConfigdata = deepLinkTestConfig.mergeEnvironments(responseConfigdata);
+    var linesResponseConfig = responseConfigdata.match(/^.*([\n\r]+|$)/gm);
+    console.log("linesResponseConfig " + linesRequestConfig);
+    var statusCode = parseInt(linesResponseConfig[0]);
+    var timeResponse = parseInt(linesResponseConfig[1]);
+    var responseBody = '';
+    if(linesResponseConfig.length > 2) {
+      linesResponseConfig.forEach((element, index) => {
+        if(index >= 2) {
+        responseBody += element;
         }
-    );
+      });
+    }
+
+    console.log("responseBody " + responseBody);
+
+    await mockServerClient.mockServerClient("localhost", 9999)
+      .mockAnyResponse(
+        {
+            'httpRequest': {
+                'method': requestMethod,
+                'path': requestPath,
+                'body': {
+                    'type': "STRING",
+                    'value': requestBody
+                }
+            },
+            'httpResponse': {
+                'statusCode': statusCode,
+                'body': responseBody,
+                'delay': {
+                    'timeUnit': 'MILLISECONDS',
+                    'value': timeResponse
+                }
+            }
+        }
+        );
+  });
 }
 
-function runTestCase(testCase) {
+async function runTestCase(testCase) {
+  await resetAndAddMockServerRules(testCase.mockserver_configs);
  //TODO run test case
  //1. clear all mock rules + add new mock rules
+ 
  //2. start deeplink by adb 
  //3. capture screen
  //4. record video
  //5. clear mock rules
 }
 
-function runSelectedTestCases() {
+async function runSelectedTestCases() {
   var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
   console.log("runSelectedTestCases " + testcases);
   
@@ -170,13 +212,13 @@ function runSelectedTestCases() {
 
 }
 
-function handleRun() {
+async function handleRun() {
   
   mockServerNode.start_mockserver({
     serverPort: 9999,
     trace: true
   }).then(
-    function(result) {
+    async function(result) {
         runSelectedTestCases();
     }, 
     function(error) {
@@ -186,7 +228,7 @@ function handleRun() {
 
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
 
   const replaceText = (selector, text) => {
     const element = document.getElementById(selector)
@@ -204,7 +246,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initDeviceCombobox(rootPathApp);
   
   const btRunDeeplinkTest = document.getElementById("btRunDeeplinkTest");
-  btRunDeeplinkTest.onclick = function() {
+  btRunDeeplinkTest.onclick = async function() {
         handleRun();
   };
 })
@@ -302,9 +344,12 @@ function initConfigCombobox(rootPathApp) {
     deepLinkTestConfig.configDeeplinkTest = null;
     clearConfigItems();
     
-    let rawdata = fs.readFileSync(`${configPathApp}/${configCombobox.value}`);
+    let rawdata = fs.readFileSync(`${configPathApp}/${configCombobox.value}`, 'utf8');
     
     deepLinkTestConfig.configDeeplinkTest = JSON.parse(rawdata);
+
+    let envVarsdata = fs.readFileSync(`${configPathApp}/env_vars/env_vars`, 'utf8');
+    deepLinkTestConfig.environmentVars = JSON.parse(envVarsdata);
     populateConfigItems();
   }
 
@@ -312,7 +357,6 @@ function initConfigCombobox(rootPathApp) {
     onConfigComboboxChange();
   };
 
-  const fs = require('fs');
   const files = fs.readdirSync(configPathApp, {
     withFileTypes: true,
   }).filter(fileEnt => fileEnt.isFile())
