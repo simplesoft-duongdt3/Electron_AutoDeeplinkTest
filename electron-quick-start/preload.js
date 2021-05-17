@@ -102,7 +102,7 @@ function callAdbSync(adbPath, options) {
   }
 
   var cmdRun = cmd.join(" ");
-  var ls = execSync(`${a} ${cmdRun}`, cmd, {encoding: 'utf8', timeout: 10000});
+  var ls = execSync(`${a} ${cmdRun}`, {encoding: 'utf8', timeout: 10000});
   return ls;
 };
 
@@ -211,18 +211,22 @@ async function resetAndAddMockServerRules(mockserverConfigs) {
   });
 }
 
-async function runTestCase(testCase) {
+async function runTestCase(testCase, deviceSelected, adbPath) {
  //TODO run test case
  //1. clear all mock rules + add new mock rules
  await resetAndAddMockServerRules(testCase.mockserver_configs);
  //2. start deeplink by adb 
-
+ var result = callAdbSync(adbPath, {
+  deviceID: deviceSelected,
+  cmd: [`shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d '${testCase.deeplink}'`]
+});
+ 
  //3. capture screen
  //4. record video
  //5. clear mock rules
 }
 
-async function runSelectedTestCases() {
+async function runSelectedTestCases(deviceSelected, adbPath) {
 
   var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
   console.log("runSelectedTestCases " + testcases);
@@ -230,7 +234,7 @@ async function runSelectedTestCases() {
   testcases.forEach(testCase => {
       var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
       if(isRun) {
-          runTestCase(testCase);
+          runTestCase(testCase, deviceSelected, adbPath);
       }
   });
   //addMockServerRules();
@@ -242,7 +246,7 @@ async function handleRun(packageName, adbPath, deviceSelected) {
     //0. Clear data app
     var result = callAdbSync(adbPath, {
       deviceID: deviceSelected,
-      cmd: ["shell", "pm", "clear", `'${packageName}'`]
+      cmd: [`shell`, `pm` , `clear`, `'${packageName}'`]
     });
 
     console.log("clearCmd result = " + result)
@@ -252,7 +256,7 @@ async function handleRun(packageName, adbPath, deviceSelected) {
       trace: true
     }).then(
       async function(result) {
-          runSelectedTestCases();
+          runSelectedTestCases(deviceSelected, adbPath);
       }, 
       function(error) {
         console.log("start_mockserver ERROR " + error)
