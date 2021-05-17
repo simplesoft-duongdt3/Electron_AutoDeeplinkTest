@@ -65,8 +65,6 @@ function callAdb(adbPath, options, next) {
     cmd.unshift("-s", options.deviceID)
   }
 
-  
-
   var cmdRun = cmd.join(" ");
   var ls = exec(`${a}`, cmd);
   var useNext = false;
@@ -92,9 +90,25 @@ function callAdb(adbPath, options, next) {
   return ls;
 };
 
+function callAdbSync(adbPath, options) {
+  var exec = require('child_process').spawn;
+
+  var a = adbPath + 'adb.exe';
+
+  var cmd = options.cmd;
+
+  if (typeof options.deviceID === 'string') {
+    cmd.unshift("-s", options.deviceID)
+  }
+
+  var cmdRun = cmd.join(" ");
+  var ls = execSync(`${a} ${cmdRun}`, cmd, {encoding: 'utf8', timeout: 10000});
+  return ls;
+};
+
 var mockServerNode = require('mockserver-node');
 var mockServerClient = require('mockserver-client');
-
+const { execSync } = require('child_process');
 
 function demoMockRequest() {
   mockServerClient.mockServerClient("localhost", 9999)
@@ -226,24 +240,24 @@ async function runSelectedTestCases() {
 async function handleRun(packageName, adbPath, deviceSelected) {
   console.log(`handleRun ${packageName}  ${deviceSelected} ${adbPath}`)
     //0. Clear data app
-    callAdb(adbPath, {
+    var result = callAdbSync(adbPath, {
       deviceID: deviceSelected,
       cmd: ["shell", "pm", "clear", `'${packageName}'`]
-    }, function (result) {
-      console.log("clearCmd result = " + result)
-
-      mockServerNode.start_mockserver({
-        serverPort: 9999,
-        trace: true
-      }).then(
-        async function(result) {
-            runSelectedTestCases();
-        }, 
-        function(error) {
-          console.log("start_mockserver ERROR " + error)
-        }
-      );
     });
+
+    console.log("clearCmd result = " + result)
+
+    mockServerNode.start_mockserver({
+      serverPort: 9999,
+      trace: true
+    }).then(
+      async function(result) {
+          runSelectedTestCases();
+      }, 
+      function(error) {
+        console.log("start_mockserver ERROR " + error)
+      }
+    );
 
 }
 
