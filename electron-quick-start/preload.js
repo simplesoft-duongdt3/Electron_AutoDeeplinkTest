@@ -6,10 +6,11 @@ function rootPath() {
 } 
 
 class DeepLinkTestConfig {
-  constructor(rootPathApp, configDeeplinkTest, environmentVars) {
+  constructor(rootPathApp, configDeeplinkTest, environmentVars, deviceSelected) {
     this.rootPathApp = rootPathApp;
     this.configDeeplinkTest = configDeeplinkTest;
     this.environmentVars = environmentVars;
+    this.deviceSelected = deviceSelected;
   }
 
   mergeEnvironments(text) {
@@ -21,9 +22,15 @@ class DeepLinkTestConfig {
     
     return textNew;
   }
+
+  getAdbPath() {
+    var adbPath = this.rootPathApp + "\\adb\\";
+    console.log("adbPath " + adbPath);
+    return adbPath;
+  }
 }
 
-var deepLinkTestConfig = new DeepLinkTestConfig(null, null, null)
+var deepLinkTestConfig = new DeepLinkTestConfig(null, null, null, null)
 
 var AndroidDevice = function (id, type) {
   this.id = id;
@@ -50,24 +57,27 @@ function parseDevices(data) {
 function callAdb(adbPath, options, next) {
   var exec = require('child_process').spawn;
 
-  var a = adbPath + 'adb';
+  var a = adbPath + 'adb.exe';
 
   var cmd = options.cmd;
 
   if (typeof options.deviceID === 'string') {
-      cmd.push('-s');
-      cmd.push(options.deviceID);
+    cmd.unshift("-s", options.deviceID)
   }
 
-  var ls = exec(a, cmd);
+  
+
+  var cmdRun = cmd.join(" ");
+  var ls = exec(`${a}`, cmd);
   var useNext = false;
   ls.stdout.on('data', function (data) {
+      console.log("stdout " + data.toString());
       useNext = true;
       next && next(data.toString());
   });
 
   ls.stderr.on('data', function (data) {
-      //console.log(data.toString());
+    console.log("stderr " + data.toString());
   });
 
   ls.on('exit', function () {
@@ -188,17 +198,18 @@ async function resetAndAddMockServerRules(mockserverConfigs) {
 }
 
 async function runTestCase(testCase) {
-  await resetAndAddMockServerRules(testCase.mockserver_configs);
  //TODO run test case
  //1. clear all mock rules + add new mock rules
- 
+ await resetAndAddMockServerRules(testCase.mockserver_configs);
  //2. start deeplink by adb 
+
  //3. capture screen
  //4. record video
  //5. clear mock rules
 }
 
 async function runSelectedTestCases() {
+
   var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
   console.log("runSelectedTestCases " + testcases);
   
@@ -212,19 +223,27 @@ async function runSelectedTestCases() {
 
 }
 
-async function handleRun() {
-  
-  mockServerNode.start_mockserver({
-    serverPort: 9999,
-    trace: true
-  }).then(
-    async function(result) {
-        runSelectedTestCases();
-    }, 
-    function(error) {
-      console.log("start_mockserver ERROR " + error)
-    }
-  );
+async function handleRun(packageName, adbPath, deviceSelected) {
+  console.log(`handleRun ${packageName}  ${deviceSelected} ${adbPath}`)
+    //0. Clear data app
+    callAdb(adbPath, {
+      deviceID: deviceSelected,
+      cmd: ["shell", "pm", "clear", `'${packageName}'`]
+    }, function (result) {
+      console.log("clearCmd result = " + result)
+
+      mockServerNode.start_mockserver({
+        serverPort: 9999,
+        trace: true
+      }).then(
+        async function(result) {
+            runSelectedTestCases();
+        }, 
+        function(error) {
+          console.log("start_mockserver ERROR " + error)
+        }
+      );
+    });
 
 }
 
@@ -247,13 +266,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   const btRunDeeplinkTest = document.getElementById("btRunDeeplinkTest");
   btRunDeeplinkTest.onclick = async function() {
-        handleRun();
+        handleRun(deepLinkTestConfig.configDeeplinkTest.package_name, deepLinkTestConfig.getAdbPath(), deepLinkTestConfig.deviceSelected);
   };
 })
 
 function initDeviceCombobox(rootPathApp) {
   var deviceCombobox = document.getElementById("deviceCombobox");
-
+  deviceCombobox.innerHTML = '';
   const adbPath = rootPathApp + "\\adb\\";
   callAdb(adbPath, {
     cmd: ['devices']
@@ -267,7 +286,15 @@ function initDeviceCombobox(rootPathApp) {
       option.text = devices[i].id;
       deviceCombobox.add(option);
     }
+
+    deepLinkTestConfig.deviceSelected = deviceCombobox.value;
+    console.log("deviceSelected init " + deepLinkTestConfig.deviceSelected);
   });
+
+  deviceCombobox.onchange = function() {
+    deepLinkTestConfig.deviceSelected = deviceCombobox.value;
+    console.log("deviceSelected " + deepLinkTestConfig.deviceSelected);
+  };
 }
 
 function initConfigCombobox(rootPathApp) {
@@ -280,6 +307,8 @@ function initConfigCombobox(rootPathApp) {
   var cbAllConfigTop = document.getElementById("cbAllConfigTop");
   var cbAllConfigBottom = document.getElementById("cbAllConfigBottom");
 
+  deviceCombobox.innerHTML = '';
+  
   function updateAllCheckConfigItems(checked) {
     var items = document.getElementsByClassName("cbConfigItem");
     var size = items.length;
