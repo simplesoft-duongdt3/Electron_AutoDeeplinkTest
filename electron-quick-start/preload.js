@@ -163,8 +163,8 @@ async function resetAndAddMockServerRules(mockserverConfigs) {
 
     var linesRequestConfig = requestConfigdata.match(/^.*([\n\r]+|$)/gm);
     console.log("linesRequestConfig " + linesRequestConfig);
-    var requestMethod = linesRequestConfig[0];
-    var requestPath = linesRequestConfig[1];
+    var requestMethod = linesRequestConfig[0].trim();
+    var requestPath = linesRequestConfig[1].trim();
     var requestBody = '';
     if(linesRequestConfig.length > 2) {
       requestBody = linesRequestConfig[2];
@@ -174,8 +174,8 @@ async function resetAndAddMockServerRules(mockserverConfigs) {
     responseConfigdata = deepLinkTestConfig.mergeEnvironments(responseConfigdata);
     var linesResponseConfig = responseConfigdata.match(/^.*([\n\r]+|$)/gm);
     console.log("linesResponseConfig " + linesRequestConfig);
-    var statusCode = parseInt(linesResponseConfig[0]);
-    var timeResponse = parseInt(linesResponseConfig[1]);
+    var statusCode = parseInt(linesResponseConfig[0].trim());
+    var timeResponse = parseInt(linesResponseConfig[1].trim());
     var responseBody = '';
     if(linesResponseConfig.length > 2) {
       linesResponseConfig.forEach((element, index) => {
@@ -211,17 +211,39 @@ async function resetAndAddMockServerRules(mockserverConfigs) {
   });
 }
 
-async function runTestCase(testCase, deviceSelected, adbPath) {
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+} 
+
+async function runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath) {
  //TODO run test case
  //1. clear all mock rules + add new mock rules
  await resetAndAddMockServerRules(testCase.mockserver_configs);
- //2. start deeplink by adb 
- var result = callAdbSync(adbPath, {
+ //2. go home + start deeplink by adb 
+ var resultHome = callAdbSync(adbPath, {
   deviceID: deviceSelected,
-  cmd: [`shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d '${testCase.deeplink}'`]
+  cmd: [`shell input keyevent 3`]
+});
+
+console.log("go home " + resultHome)
+ var resultStartDeeplink = callAdbSync(adbPath, {
+  deviceID: deviceSelected,
+  cmd: [`shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "${testCase.deeplink}"`]
 });
  
+console.log(`start deeplink ${testCase.deeplink} ` + resultStartDeeplink)
+//2.1 Wait activity display
+
+await sleep(8000)
+var resultFindAcivity = callAdbSync(adbPath, {
+  deviceID: deviceSelected,
+  cmd: [`shell dumpsys activity activities`]
+});
+console.log(`resultFindAcivity ` + resultFindAcivity)
  //3. capture screen
+
  //4. record video
  //5. clear mock rules
 }
@@ -231,12 +253,21 @@ async function runSelectedTestCases(deviceSelected, adbPath) {
   var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
   console.log("runSelectedTestCases " + testcases);
   
-  testcases.forEach(testCase => {
-      var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
-      if(isRun) {
-          runTestCase(testCase, deviceSelected, adbPath);
-      }
+  
+  var resultExternalStoragePath = callAdbSync(adbPath, {
+    deviceID: deviceSelected,
+    cmd: [`shell echo $EXTERNAL_STORAGE`]
   });
+
+  console.log("resultExternalStoragePath " + resultExternalStoragePath)
+
+  for (let index = 0; index < testcases.length; index++) {
+    const testCase = testcases[index];
+    var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
+      if(isRun) {
+        await runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath);
+      }
+  }
   //addMockServerRules();
 
 }
@@ -256,7 +287,7 @@ async function handleRun(packageName, adbPath, deviceSelected) {
       trace: true
     }).then(
       async function(result) {
-          runSelectedTestCases(deviceSelected, adbPath);
+          await runSelectedTestCases(deviceSelected, adbPath);
       }, 
       function(error) {
         console.log("start_mockserver ERROR " + error)
