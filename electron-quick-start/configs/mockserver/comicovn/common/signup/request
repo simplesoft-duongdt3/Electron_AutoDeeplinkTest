@@ -1,2 +1,2 @@
-GET
-/alpha-auth-api/comico-vn/sign-in
+POST
+/alpha-auth-api/users/sign-up

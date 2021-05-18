@@ -201,6 +201,12 @@ async function resetAndAddMockServerRules(mockserverConfigs) {
             'httpResponse': {
                 'statusCode': statusCode,
                 'body': responseBody,
+                "headers": [
+                  {
+                      "name": "Content-Type",
+                      "values": ["application/json; charset=utf-8"]
+                  }
+              ],
                 'delay': {
                     'timeUnit': 'MILLISECONDS',
                     'value': timeResponse
