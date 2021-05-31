@@ -37,6 +37,7 @@ var AndroidDevice = function (id, type) {
   this.type = type;
 };
 
+const path = require('path');
 const fs = require('fs');
 
 function parseDevices(data) {
@@ -109,6 +110,11 @@ function callAdbSync(adbPath, options) {
 var mockServerNode = require('mockserver-node');
 var mockServerClient = require('mockserver-client');
 const { execSync } = require('child_process');
+
+function padZeroLead(textNum, size) {
+  while (textNum.length < size) textNum = "0" + textNum;
+  return textNum;
+}
 
 function demoMockRequest() {
   mockServerClient.mockServerClient("localhost", 9999)
@@ -223,7 +229,7 @@ function sleep(ms) {
   });
 } 
 
-async function runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath) {
+async function runTestCase(index, testCase, deviceSelected, adbPath, externalStoragePath, testCaseResultFolder) {
  //TODO run test case
  //1. clear all mock rules + add new mock rules
  await resetAndAddMockServerRules(testCase.mockserver_configs);
@@ -248,13 +254,30 @@ var resultFindAcivity = callAdbSync(adbPath, {
   cmd: [`shell dumpsys activity activities`]
 });
 console.log(`resultFindAcivity ` + resultFindAcivity)
+
  //3. capture screen
+var imagePathInDevice = `${externalStoragePath}/screencap.png`
+var resultTakeScreenshot = callAdbSync(adbPath, {
+  deviceID: deviceSelected,
+  cmd: [`shell screencap -p ${imagePathInDevice}`]
+});
+
+console.log(`takeScreenshot ` + resultTakeScreenshot)
+var numIndexPaddingZero = padZeroLead((index + 1).toString(), 3)
+var imgFileName = `${numIndexPaddingZero}_${testCase.id}_screenshot.png`
+
+var resultPullScreenshot = callAdbSync(adbPath, {
+  deviceID: deviceSelected,
+  cmd: [`pull ${imagePathInDevice} ${testCaseResultFolder}/${imgFileName}`]
+});
+
+console.log(`pullScreenshot ` + resultPullScreenshot)
 
  //4. record video
  //5. clear mock rules
 }
 
-async function runSelectedTestCases(deviceSelected, adbPath) {
+async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
 
   var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
   console.log("runSelectedTestCases " + testcases);
@@ -267,18 +290,27 @@ async function runSelectedTestCases(deviceSelected, adbPath) {
 
   console.log("resultExternalStoragePath " + resultExternalStoragePath)
 
+  let nowMilis = Date.now();
+  var testCaseResultFolder = "deeplink_test_" + nowMilis;
+  if (!fs.existsSync(testCaseResultFolder)) {
+    fs.mkdirSync(testCaseResultFolder)
+  }
+
+
+  const testCaseResultPathApp = path.resolve(`${rootPathApp}/${testCaseResultFolder}`);
+
   for (let index = 0; index < testcases.length; index++) {
     const testCase = testcases[index];
     var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
       if(isRun) {
-        await runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath);
+        await runTestCase(index, testCase, deviceSelected, adbPath, resultExternalStoragePath.trim(), testCaseResultPathApp);
       }
   }
   //addMockServerRules();
 
 }
 
-async function handleRun(packageName, adbPath, deviceSelected) {
+async function handleRun(packageName, adbPath, deviceSelected, rootPathApp) {
   console.log(`handleRun ${packageName}  ${deviceSelected} ${adbPath}`)
     //0. Clear data app
     var result = callAdbSync(adbPath, {
@@ -293,7 +325,7 @@ async function handleRun(packageName, adbPath, deviceSelected) {
       trace: true
     }).then(
       async function(result) {
-          await runSelectedTestCases(deviceSelected, adbPath);
+          await runSelectedTestCases(deviceSelected, adbPath, rootPathApp);
       }, 
       function(error) {
         console.log("start_mockserver ERROR " + error)
@@ -321,7 +353,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   const btRunDeeplinkTest = document.getElementById("btRunDeeplinkTest");
   btRunDeeplinkTest.onclick = async function() {
-        handleRun(deepLinkTestConfig.configDeeplinkTest.package_name, deepLinkTestConfig.getAdbPath(), deepLinkTestConfig.deviceSelected);
+        handleRun(deepLinkTestConfig.configDeeplinkTest.package_name, deepLinkTestConfig.getAdbPath(), deepLinkTestConfig.deviceSelected, deepLinkTestConfig.rootPathApp);
   };
 })
 
@@ -353,7 +385,6 @@ function initDeviceCombobox(rootPathApp) {
 }
 
 function initConfigCombobox(rootPathApp) {
-  const path = require('path');
   const configPathApp = path.resolve(`${rootPathApp}/configs`);
 
   var configCombobox = document.getElementById("configCombobox");
