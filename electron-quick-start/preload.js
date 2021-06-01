@@ -357,15 +357,21 @@ window.addEventListener('DOMContentLoaded', async () => {
   btRunDeeplinkTest.onclick = async function() {
         handleRun(deepLinkTestConfig.configDeeplinkTest.package_name, deepLinkTestConfig.getAdbPath(), deepLinkTestConfig.deviceSelected, deepLinkTestConfig.rootPathApp);
   };
+  const btRefreshDevices = document.getElementById("btRefreshDevices");
+  btRefreshDevices.onclick = async function() {
+    initDeviceCombobox(rootPathApp);
+};
+
+  
 })
 
 function initDeviceCombobox(rootPathApp) {
   var deviceCombobox = document.getElementById("deviceCombobox");
-  deviceCombobox.innerHTML = '';
   const adbPath = rootPathApp + "\\adb\\";
   callAdb(adbPath, {
     cmd: ['devices']
   }, function (result) {
+    deviceCombobox.innerHTML = '';
     var devices = parseDevices(result);
     console.log(devices);
 
@@ -455,6 +461,8 @@ function initConfigCombobox(rootPathApp) {
 
   function clearConfigItems() {
     configItemsTable.textContent = '';
+    cbAllConfigTop.checked = false
+    cbAllConfigBottom.checked = false
   }
 
   function onConfigComboboxChange() {
