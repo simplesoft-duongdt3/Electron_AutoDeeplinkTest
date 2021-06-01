@@ -3,7 +3,7 @@
 
 function rootPath() {
   return __dirname;
-} 
+}
 
 class DeepLinkTestConfig {
   constructor(rootPathApp, configDeeplinkTest, environmentVars, deviceSelected) {
@@ -19,7 +19,7 @@ class DeepLinkTestConfig {
     this.environmentVars.environmentVars.forEach(element => {
       textNew = textNew.replace(new RegExp(`\\$ENV\\{${element.key}\\}`, "g"), element.value);
     });
-    
+
     return textNew;
   }
 
@@ -44,12 +44,12 @@ function parseDevices(data) {
   var lines = data.toString().split('\n');
   var devices = [];
 
-  for (var i=0; i<lines.length; i++) {
-      var o = lines[i].split('\t');
+  for (var i = 0; i < lines.length; i++) {
+    var o = lines[i].split('\t');
 
-      if (o.length == 2) {
-          devices.push(new AndroidDevice(o[0], o[1]));
-      }
+    if (o.length == 2) {
+      devices.push(new AndroidDevice(o[0], o[1]));
+    }
   }
 
   return devices;
@@ -70,9 +70,9 @@ function callAdb(adbPath, options, next) {
   var ls = exec(`${a}`, cmd);
   var useNext = false;
   ls.stdout.on('data', function (data) {
-      console.log("stdout " + data.toString());
-      useNext = true;
-      next && next(data.toString());
+    console.log("stdout " + data.toString());
+    useNext = true;
+    next && next(data.toString());
   });
 
   ls.stderr.on('data', function (data) {
@@ -80,13 +80,13 @@ function callAdb(adbPath, options, next) {
   });
 
   ls.on('exit', function () {
-      if (typeof next === 'function') {
-          if (useNext === false) {
-              setTimeout(function () {
-                  next();
-              }, 200);
-          }
+    if (typeof next === 'function') {
+      if (useNext === false) {
+        setTimeout(function () {
+          next();
+        }, 200);
       }
+    }
   });
   return ls;
 };
@@ -103,7 +103,7 @@ function callAdbSync(adbPath, options) {
   }
 
   var cmdRun = cmd.join(" ");
-  var ls = execSync(`${a} ${cmdRun}`, {encoding: 'utf8', timeout: 10000});
+  var ls = execSync(`${a} ${cmdRun}`, { encoding: 'utf8', timeout: 10000 });
   return ls;
 };
 
@@ -118,43 +118,43 @@ function padZeroLead(textNum, size) {
 
 function demoMockRequest() {
   mockServerClient.mockServerClient("localhost", 9999)
-  .mockAnyResponse(
-    {
+    .mockAnyResponse(
+      {
         'httpRequest': {
-            'method': 'POST',
-            'path': '/somePath',
-            'queryStringParameters': [
-                {
-                    'name': 'test',
-                    'values': [ 'true' ]
-                }
-            ],
-            'body': {
-                'type': "STRING",
-                'value': 'someBody'
+          'method': 'POST',
+          'path': '/somePath',
+          'queryStringParameters': [
+            {
+              'name': 'test',
+              'values': ['true']
             }
+          ],
+          'body': {
+            'type': "STRING",
+            'value': 'someBody'
+          }
         },
         'httpResponse': {
-            'statusCode': 200,
-            'body': JSON.stringify({ name: 'value' }),
-            'delay': {
-                'timeUnit': 'MILLISECONDS',
-                'value': 250
-            }
+          'statusCode': 200,
+          'body': JSON.stringify({ name: 'value' }),
+          'delay': {
+            'timeUnit': 'MILLISECONDS',
+            'value': 250
+          }
         },
         'times': {
-            'remainingTimes': 1,
-            'unlimited': false
+          'remainingTimes': 1,
+          'unlimited': false
         }
-    }
+      }
     )
     .then(
-        function(result) {
-            console.log("mockAnyResponse " + result)
-        }, 
-        function(error) {
-          console.log("mockAnyResponse " + error)
-        }
+      function (result) {
+        console.log("mockAnyResponse " + result)
+      },
+      function (error) {
+        console.log("mockAnyResponse " + error)
+      }
     );
 }
 
@@ -172,7 +172,7 @@ async function resetAndAddMockServerRules(mockServerClientLocal, mockserverConfi
     var requestMethod = linesRequestConfig[0].trim();
     var requestPath = linesRequestConfig[1].trim();
     var requestBody = '';
-    if(linesRequestConfig.length > 2) {
+    if (linesRequestConfig.length > 2) {
       requestBody = linesRequestConfig[2];
     }
 
@@ -183,10 +183,10 @@ async function resetAndAddMockServerRules(mockServerClientLocal, mockserverConfi
     var statusCode = parseInt(linesResponseConfig[0].trim());
     var timeResponse = parseInt(linesResponseConfig[1].trim());
     var responseBody = '';
-    if(linesResponseConfig.length > 2) {
+    if (linesResponseConfig.length > 2) {
       linesResponseConfig.forEach((element, index) => {
-        if(index >= 2) {
-        responseBody += element;
+        if (index >= 2) {
+          responseBody += element;
         }
       });
     }
@@ -196,30 +196,30 @@ async function resetAndAddMockServerRules(mockServerClientLocal, mockserverConfi
     await mockServerClient.mockServerClient("localhost", 9999)
       .mockAnyResponse(
         {
-            'httpRequest': {
-                'method': requestMethod,
-                'path': requestPath,
-                'body': {
-                    'type': "STRING",
-                    'value': requestBody
-                }
-            },
-            'httpResponse': {
-                'statusCode': statusCode,
-                'body': responseBody,
-                "headers": [
-                  {
-                      "name": "Content-Type",
-                      "values": ["application/json; charset=utf-8"]
-                  }
-              ],
-                'delay': {
-                    'timeUnit': 'MILLISECONDS',
-                    'value': timeResponse
-                }
+          'httpRequest': {
+            'method': requestMethod,
+            'path': requestPath,
+            'body': {
+              'type': "STRING",
+              'value': requestBody
             }
+          },
+          'httpResponse': {
+            'statusCode': statusCode,
+            'body': responseBody,
+            "headers": [
+              {
+                "name": "Content-Type",
+                "values": ["application/json; charset=utf-8"]
+              }
+            ],
+            'delay': {
+              'timeUnit': 'MILLISECONDS',
+              'value': timeResponse
+            }
+          }
         }
-        );
+      );
   });
 }
 
@@ -227,74 +227,94 @@ function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-} 
+}
+
+const TestCaseRunResult = {
+  FOUND_ACTIVITY: "FOUND_ACTIVITY",
+  MISSING_ACTIVITY: "MISSING_ACTIVITY",
+  ERROR: "ERROR",
+}
 
 async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePath, testCaseResultFolder) {
- //TODO run test case
- mockServerClientLocal = mockServerClient.mockServerClient("localhost", 9999)
- //1. clear all mock rules + add new mock rules
- await resetAndAddMockServerRules(mockServerClientLocal, testCase.mockserver_configs);
- //2. go home + start deeplink by adb 
- var resultHome = callAdbSync(adbPath, {
-  deviceID: deviceSelected,
-  cmd: [`shell input keyevent 3`]
-});
+  var testCaseRunResult = TestCaseRunResult.ERROR
+  try {
+    //TODO run test case
+    mockServerClientLocal = mockServerClient.mockServerClient("localhost", 9999)
+    //1. clear all mock rules + add new mock rules
+    await resetAndAddMockServerRules(mockServerClientLocal, testCase.mockserver_configs);
+    //2. go home + start deeplink by adb 
+    var resultHome = callAdbSync(adbPath, {
+      deviceID: deviceSelected,
+      cmd: [`shell input keyevent 3`]
+    });
 
-await sleep(2000)
+    await sleep(2000)
 
-console.log("go home " + resultHome)
- var resultStartDeeplink = callAdbSync(adbPath, {
-  deviceID: deviceSelected,
-  cmd: [`shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "${testCase.deeplink}"`]
-});
- 
-console.log(`start deeplink ${testCase.deeplink} ` + resultStartDeeplink)
-//2.1 Wait activity display
+    console.log("go home " + resultHome)
+    var encodeDeepLink = encodeURI(testCase.deeplink)
+    encodeDeepLink = encodeDeepLink.replaceAll("&", "\\&");
+    console.log("encodeDeepLink " + encodeDeepLink)
 
-await sleep(8000)
-var resultFindAcivity = callAdbSync(adbPath, {
-  deviceID: deviceSelected,
-  cmd: [`shell dumpsys activity activities`]
-});
-console.log(`resultFindAcivity ` + resultFindAcivity)
+    var resultStartDeeplink = callAdbSync(adbPath, {
+      deviceID: deviceSelected,
+      cmd: [`shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "${encodeDeepLink}"`]
+    });
 
- //3. capture screen
-var imagePathInDevice = `${externalStoragePath}/screencap.png`
-var resultTakeScreenshot = callAdbSync(adbPath, {
-  deviceID: deviceSelected,
-  cmd: [`shell screencap -p ${imagePathInDevice}`]
-});
+    console.log(`start deeplink ${testCase.deeplink} ` + resultStartDeeplink)
+    //2.1 Wait activity display
 
-console.log(`takeScreenshot ` + resultTakeScreenshot)
-var imgFileName = `${testCase.id}_screenshot.png`
+    await sleep(8000)
+    var resultFindAcivity = callAdbSync(adbPath, {
+      deviceID: deviceSelected,
+      cmd: [`shell dumpsys activity activities`]
+    });
+    console.log(`resultFindAcivity ` + resultFindAcivity)
 
-var resultPullScreenshot = callAdbSync(adbPath, {
-  deviceID: deviceSelected,
-  cmd: [`pull ${imagePathInDevice} ${testCaseResultFolder}/${imgFileName}`]
-});
+    //TODO find activity
+    foundActivity = true
+    if(foundActivity) {
+      testCaseRunResult = TestCaseRunResult.FOUND_ACTIVITY
+    } else {
+      testCaseRunResult = TestCaseRunResult.MISSING_ACTIVITY
+    }
 
-console.log(`pullScreenshot ` + resultPullScreenshot)
+    //3. capture screen
+    var imagePathInDevice = `${externalStoragePath}/screencap.png`
+    var resultTakeScreenshot = callAdbSync(adbPath, {
+      deviceID: deviceSelected,
+      cmd: [`shell screencap -p ${imagePathInDevice}`]
+    });
 
- //4. record video
- //5. get record request, response
- mockServerClientLocal
-    .retrieveRecordedRequestsAndResponses({})
-    .then(
-        function (recordedRequestsAndResponses) {
-            console.log("retrieveRecordedRequestsAndResponses " + JSON.stringify(recordedRequestsAndResponses));
-        },
-        function (error) {
-          console.log("retrieveRecordedRequestsAndResponses error " + error);
-        }
-    );
+    console.log(`takeScreenshot ` + resultTakeScreenshot)
+    var imgFileName = `${testCase.id}_screenshot.png`
+
+    var resultPullScreenshot = callAdbSync(adbPath, {
+      deviceID: deviceSelected,
+      cmd: [`pull ${imagePathInDevice} ${testCaseResultFolder}/${imgFileName}`]
+    });
+
+    console.log(`pullScreenshot ` + resultPullScreenshot)
+
+    //4. record video
+    //5. get record request, response
+    var retrieveRecordedRequestsAndResponses = await mockServerClientLocal
+      .retrieveRecordedRequestsAndResponses({})
+
+    console.log("retrieveRecordedRequestsAndResponses " + JSON.stringify(retrieveRecordedRequestsAndResponses));
+  } catch (error) {
+    console.error("run test case error: " + error)
+    testCaseRunResult = TestCaseRunResult.ERROR
+  }
+
+  return testCaseRunResult
 }
 
 async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
 
   var testcases = deepLinkTestConfig.configDeeplinkTest.deeplinks
   console.log("runSelectedTestCases " + testcases);
-  
-  
+
+
   var resultExternalStoragePath = callAdbSync(adbPath, {
     deviceID: deviceSelected,
     cmd: [`shell echo $EXTERNAL_STORAGE`]
@@ -314,9 +334,11 @@ async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
   for (let index = 0; index < testcases.length; index++) {
     const testCase = testcases[index];
     var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
-      if(isRun) {
-        await runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath.trim(), testCaseResultPathApp);
-      }
+    if (isRun) {
+      var result = await runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath.trim(), testCaseResultPathApp);
+      //TODO log or save result
+      console.log("runTestCase result: " + result)
+    }
   }
   //addMockServerRules();
 
@@ -324,25 +346,25 @@ async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
 
 async function handleRun(packageName, adbPath, deviceSelected, rootPathApp) {
   console.log(`handleRun ${packageName}  ${deviceSelected} ${adbPath}`)
-    //0. Clear data app
-    var result = callAdbSync(adbPath, {
-      deviceID: deviceSelected,
-      cmd: [`shell`, `pm` , `clear`, `'${packageName}'`]
-    });
+  //0. Clear data app
+  var result = callAdbSync(adbPath, {
+    deviceID: deviceSelected,
+    cmd: [`shell`, `pm`, `clear`, `'${packageName}'`]
+  });
 
-    console.log("clearCmd result = " + result)
+  console.log("clearCmd result = " + result)
 
-    mockServerNode.start_mockserver({
-      serverPort: 9999,
-      trace: true
-    }).then(
-      async function(result) {
-          await runSelectedTestCases(deviceSelected, adbPath, rootPathApp);
-      }, 
-      function(error) {
-        console.log("start_mockserver ERROR " + error)
-      }
-    );
+  mockServerNode.start_mockserver({
+    serverPort: 9999,
+    trace: true
+  }).then(
+    async function (result) {
+      await runSelectedTestCases(deviceSelected, adbPath, rootPathApp);
+    },
+    function (error) {
+      console.log("start_mockserver ERROR " + error)
+    }
+  );
 
 }
 
@@ -362,17 +384,17 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   initConfigCombobox(rootPathApp);
   initDeviceCombobox(rootPathApp);
-  
+
   const btRunDeeplinkTest = document.getElementById("btRunDeeplinkTest");
-  btRunDeeplinkTest.onclick = async function() {
-        handleRun(deepLinkTestConfig.configDeeplinkTest.package_name, deepLinkTestConfig.getAdbPath(), deepLinkTestConfig.deviceSelected, deepLinkTestConfig.rootPathApp);
+  btRunDeeplinkTest.onclick = async function () {
+    handleRun(deepLinkTestConfig.configDeeplinkTest.package_name, deepLinkTestConfig.getAdbPath(), deepLinkTestConfig.deviceSelected, deepLinkTestConfig.rootPathApp);
   };
   const btRefreshDevices = document.getElementById("btRefreshDevices");
-  btRefreshDevices.onclick = async function() {
+  btRefreshDevices.onclick = async function () {
     initDeviceCombobox(rootPathApp);
-};
+  };
 
-  
+
 })
 
 function initDeviceCombobox(rootPathApp) {
@@ -396,7 +418,7 @@ function initDeviceCombobox(rootPathApp) {
     console.log("deviceSelected init " + deepLinkTestConfig.deviceSelected);
   });
 
-  deviceCombobox.onchange = function() {
+  deviceCombobox.onchange = function () {
     deepLinkTestConfig.deviceSelected = deviceCombobox.value;
     console.log("deviceSelected " + deepLinkTestConfig.deviceSelected);
   };
@@ -412,21 +434,21 @@ function initConfigCombobox(rootPathApp) {
   var cbAllConfigBottom = document.getElementById("cbAllConfigBottom");
 
   deviceCombobox.innerHTML = '';
-  
+
   function updateAllCheckConfigItems(checked) {
     var items = document.getElementsByClassName("cbConfigItem");
     var size = items.length;
     for (i = 0; i < size; i++) {
       items[i].checked = checked;
-    } 
+    }
   }
 
-  cbAllConfigTop.onchange = function() {
+  cbAllConfigTop.onchange = function () {
     cbAllConfigBottom.checked = cbAllConfigTop.checked;
     updateAllCheckConfigItems(cbAllConfigTop.checked);
   };
 
-  cbAllConfigBottom.onchange = function() {
+  cbAllConfigBottom.onchange = function () {
     cbAllConfigTop.checked = cbAllConfigBottom.checked;
     updateAllCheckConfigItems(cbAllConfigBottom.checked);
   };
@@ -449,20 +471,20 @@ function initConfigCombobox(rootPathApp) {
       var deeplink = document.createElement("td");
       var deeplinkText = document.createTextNode(item.deeplink);
       deeplink.appendChild(deeplinkText);
-      row.appendChild(deeplink);     
-      
+      row.appendChild(deeplink);
+
       var status = document.createElement("td");
       var statusText = document.createTextNode("TODO");
       status.appendChild(statusText);
-      row.appendChild(status); 
+      row.appendChild(status);
 
       var checkBox = document.createElement("td");
       checkBox.innerHTML = `<input id="config_item_${item.id}" type="checkbox" class="cbConfigItem"></input>`
-      row.appendChild(checkBox); 
+      row.appendChild(checkBox);
 
       configItemsTable.appendChild(row);
 
-      row.onclick = function() {
+      row.onclick = function () {
         let checkBox = document.getElementById(`config_item_${item.id}`);
         checkBox.checked = !checkBox.checked;
       };
@@ -478,9 +500,9 @@ function initConfigCombobox(rootPathApp) {
   function onConfigComboboxChange() {
     deepLinkTestConfig.configDeeplinkTest = null;
     clearConfigItems();
-    
+
     let rawdata = fs.readFileSync(`${configPathApp}/${configCombobox.value}`, 'utf8');
-    
+
     deepLinkTestConfig.configDeeplinkTest = JSON.parse(rawdata);
 
     let envVarsdata = fs.readFileSync(`${configPathApp}/env_vars/env_vars`, 'utf8');
@@ -488,7 +510,7 @@ function initConfigCombobox(rootPathApp) {
     populateConfigItems();
   }
 
-  configCombobox.onchange = function() {
+  configCombobox.onchange = function () {
     onConfigComboboxChange();
   };
 
@@ -504,7 +526,7 @@ function initConfigCombobox(rootPathApp) {
     configCombobox.add(option);
   }
 
-  if(files.length > 0) {
+  if (files.length > 0) {
     onConfigComboboxChange();
   }
 }
