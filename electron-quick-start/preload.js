@@ -271,7 +271,8 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
     console.log(`resultFindAcivity ` + resultFindAcivity)
 
     //TODO find activity
-    foundActivity = true
+    var checkActivity = new RegExp(`(mResumedActivity: ActivityRecord).*(\\.${testCase.activity_name})`, "g")
+    foundActivity = checkActivity.test(resultFindAcivity)
     if(foundActivity) {
       testCaseRunResult = TestCaseRunResult.FOUND_ACTIVITY
     } else {
