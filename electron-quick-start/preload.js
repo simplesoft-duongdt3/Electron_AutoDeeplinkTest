@@ -158,8 +158,8 @@ function demoMockRequest() {
     );
 }
 
-async function resetAndAddMockServerRules(mockserverConfigs) {
-  await mockServerClient.mockServerClient("localhost", 9999).reset();
+async function resetAndAddMockServerRules(mockServerClientLocal, mockserverConfigs) {
+  await mockServerClientLocal.reset();
 
   console.log("mockServerClient reset all state");
 
@@ -229,10 +229,11 @@ function sleep(ms) {
   });
 } 
 
-async function runTestCase(index, testCase, deviceSelected, adbPath, externalStoragePath, testCaseResultFolder) {
+async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePath, testCaseResultFolder) {
  //TODO run test case
+ mockServerClientLocal = mockServerClient.mockServerClient("localhost", 9999)
  //1. clear all mock rules + add new mock rules
- await resetAndAddMockServerRules(testCase.mockserver_configs);
+ await resetAndAddMockServerRules(mockServerClientLocal, testCase.mockserver_configs);
  //2. go home + start deeplink by adb 
  var resultHome = callAdbSync(adbPath, {
   deviceID: deviceSelected,
@@ -265,8 +266,7 @@ var resultTakeScreenshot = callAdbSync(adbPath, {
 });
 
 console.log(`takeScreenshot ` + resultTakeScreenshot)
-var numIndexPaddingZero = padZeroLead((index + 1).toString(), 3)
-var imgFileName = `${numIndexPaddingZero}_${testCase.id}_screenshot.png`
+var imgFileName = `${testCase.id}_screenshot.png`
 
 var resultPullScreenshot = callAdbSync(adbPath, {
   deviceID: deviceSelected,
@@ -276,7 +276,17 @@ var resultPullScreenshot = callAdbSync(adbPath, {
 console.log(`pullScreenshot ` + resultPullScreenshot)
 
  //4. record video
- //5. clear mock rules
+ //5. get record request, response
+ mockServerClientLocal
+    .retrieveRecordedRequestsAndResponses({})
+    .then(
+        function (recordedRequestsAndResponses) {
+            console.log("retrieveRecordedRequestsAndResponses " + JSON.stringify(recordedRequestsAndResponses));
+        },
+        function (error) {
+          console.log("retrieveRecordedRequestsAndResponses error " + error);
+        }
+    );
 }
 
 async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
@@ -305,7 +315,7 @@ async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
     const testCase = testcases[index];
     var isRun = document.getElementById(`config_item_${testCase.id}`).checked == true;
       if(isRun) {
-        await runTestCase(index, testCase, deviceSelected, adbPath, resultExternalStoragePath.trim(), testCaseResultPathApp);
+        await runTestCase(testCase, deviceSelected, adbPath, resultExternalStoragePath.trim(), testCaseResultPathApp);
       }
   }
   //addMockServerRules();
