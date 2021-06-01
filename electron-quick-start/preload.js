@@ -239,6 +239,8 @@ async function runTestCase(index, testCase, deviceSelected, adbPath, externalSto
   cmd: [`shell input keyevent 3`]
 });
 
+await sleep(2000)
+
 console.log("go home " + resultHome)
  var resultStartDeeplink = callAdbSync(adbPath, {
   deviceID: deviceSelected,
