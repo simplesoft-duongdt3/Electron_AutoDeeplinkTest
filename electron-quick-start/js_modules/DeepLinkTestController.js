@@ -277,7 +277,7 @@ module.exports = function (rootPathApp) {
         var environmentVars = this.environmentVars
         var packageName = configDeeplinkTest.package_name
         var deviceSelected = configDeeplinkTest.deviceSelected
-        var rootPathApp = configDeeplinkTest.rootPathApp
+        var rootPathApp = this.rootPathApp
         var adbPath = getAdbPath()
         console.log(`handleRun ${packageName}  ${deviceSelected} ${adbPath}`)
         //0. Clear data app
