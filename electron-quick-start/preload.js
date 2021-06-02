@@ -55,61 +55,9 @@ function parseDevices(data) {
   return devices;
 }
 
-function callAdb(adbPath, options, next) {
-  var exec = require('child_process').spawn;
-
-  var a = adbPath + 'adb.exe';
-
-  var cmd = options.cmd;
-
-  if (typeof options.deviceID === 'string') {
-    cmd.unshift("-s", options.deviceID)
-  }
-
-  var cmdRun = cmd.join(" ");
-  var ls = exec(`${a}`, cmd);
-  var useNext = false;
-  ls.stdout.on('data', function (data) {
-    console.log("stdout " + data.toString());
-    useNext = true;
-    next && next(data.toString());
-  });
-
-  ls.stderr.on('data', function (data) {
-    console.log("stderr " + data.toString());
-  });
-
-  ls.on('exit', function () {
-    if (typeof next === 'function') {
-      if (useNext === false) {
-        setTimeout(function () {
-          next();
-        }, 200);
-      }
-    }
-  });
-  return ls;
-};
-
-function callAdbSync(adbPath, options) {
-  var exec = require('child_process').spawn;
-
-  var a = adbPath + 'adb.exe';
-
-  var cmd = options.cmd;
-
-  if (typeof options.deviceID === 'string') {
-    cmd.unshift("-s", options.deviceID)
-  }
-
-  var cmdRun = cmd.join(" ");
-  var ls = execSync(`${a} ${cmdRun}`, { encoding: 'utf8', timeout: 10000 });
-  return ls;
-};
-
 var mockServerNode = require('mockserver-node');
 var mockServerClient = require('mockserver-client');
-const { execSync } = require('child_process');
+var adb = require('./js_modules/adb');
 
 function padZeroLead(textNum, size) {
   while (textNum.length < size) textNum = "0" + textNum;
@@ -243,7 +191,7 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
     //1. clear all mock rules + add new mock rules
     await resetAndAddMockServerRules(mockServerClientLocal, testCase.mockserver_configs);
     //2. go home + start deeplink by adb 
-    var resultHome = callAdbSync(adbPath, {
+    var resultHome = adb.callAdbSync(adbPath, {
       deviceID: deviceSelected,
       cmd: [`shell input keyevent 3`]
     });
@@ -255,7 +203,7 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
     encodeDeepLink = encodeDeepLink.replaceAll("&", "\\&");
     console.log("encodeDeepLink " + encodeDeepLink)
 
-    var resultStartDeeplink = callAdbSync(adbPath, {
+    var resultStartDeeplink = adb.callAdbSync(adbPath, {
       deviceID: deviceSelected,
       cmd: [`shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "${encodeDeepLink}"`]
     });
@@ -264,7 +212,7 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
     //2.1 Wait activity display
 
     await sleep(8000)
-    var resultFindAcivity = callAdbSync(adbPath, {
+    var resultFindAcivity = adb.callAdbSync(adbPath, {
       deviceID: deviceSelected,
       cmd: [`shell dumpsys activity activities`]
     });
@@ -281,7 +229,7 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
 
     //3. capture screen
     var imagePathInDevice = `${externalStoragePath}/screencap.png`
-    var resultTakeScreenshot = callAdbSync(adbPath, {
+    var resultTakeScreenshot = adb.callAdbSync(adbPath, {
       deviceID: deviceSelected,
       cmd: [`shell screencap -p ${imagePathInDevice}`]
     });
@@ -289,7 +237,7 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
     console.log(`takeScreenshot ` + resultTakeScreenshot)
     var imgFileName = `${testCase.id}_screenshot.png`
 
-    var resultPullScreenshot = callAdbSync(adbPath, {
+    var resultPullScreenshot = adb.callAdbSync(adbPath, {
       deviceID: deviceSelected,
       cmd: [`pull ${imagePathInDevice} ${testCaseResultFolder}/${imgFileName}`]
     });
@@ -302,6 +250,8 @@ async function runTestCase(testCase, deviceSelected, adbPath, externalStoragePat
       .retrieveRecordedRequestsAndResponses({})
 
     console.log("retrieveRecordedRequestsAndResponses " + JSON.stringify(retrieveRecordedRequestsAndResponses));
+
+    await sleep(1000)
   } catch (error) {
     console.error("run test case error: " + error)
     testCaseRunResult = TestCaseRunResult.ERROR
@@ -316,7 +266,7 @@ async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
   console.log("runSelectedTestCases " + testcases);
 
 
-  var resultExternalStoragePath = callAdbSync(adbPath, {
+  var resultExternalStoragePath = adb.callAdbSync(adbPath, {
     deviceID: deviceSelected,
     cmd: [`shell echo $EXTERNAL_STORAGE`]
   });
@@ -348,7 +298,7 @@ async function runSelectedTestCases(deviceSelected, adbPath, rootPathApp) {
 async function handleRun(packageName, adbPath, deviceSelected, rootPathApp) {
   console.log(`handleRun ${packageName}  ${deviceSelected} ${adbPath}`)
   //0. Clear data app
-  var result = callAdbSync(adbPath, {
+  var result = adb.callAdbSync(adbPath, {
     deviceID: deviceSelected,
     cmd: [`shell`, `pm`, `clear`, `'${packageName}'`]
   });
@@ -401,7 +351,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 function initDeviceCombobox(rootPathApp) {
   var deviceCombobox = document.getElementById("deviceCombobox");
   const adbPath = rootPathApp + "\\adb\\";
-  callAdb(adbPath, {
+  adb.callAdb(adbPath, {
     cmd: ['devices']
   }, function (result) {
     deviceCombobox.innerHTML = '';
